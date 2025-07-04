@@ -30,7 +30,7 @@ def preprocess_data(df):
     # Feature enginnering
     df["FamilySize"] = df["SibSp"] + df["Parch"]
     df["IsAlone"] = np.where(df["FamilySize"] == 0, 1, 0)
-    df["FareBin"] = pd.cut(df["Fare"], 4, labels=False)
+    df["FareBin"] = pd.qcut(df["Fare"], 4, labels=False)
     df["AgeBin"] = pd.cut(
         df["Age"], bins=[0, 12, 20, 40, 60, np.inf], labels=False)
 
@@ -47,6 +47,8 @@ def fill_missing_ages(df):
 
     df["Age"] = df.apply(lambda row: age_fill_map[row["Pclass"]]
                          if pd.isnull(row["Age"])else row["Age"], axis=1)
+    
+    data = preprocess_data(data)
 
 
 # create features / target variables (Make flashcards)
@@ -64,7 +66,7 @@ X_test = scaler.transform(X_test)
 # Hyperparameter tuning
 
 
-def tune_model(x_train, y_train):
+def tune_model(X_train, y_train):
     param_grid = {
         "n_neighbors": range(1, 21),
         "metric": ["euclidean", "manhattan", "minkowski"],
@@ -73,7 +75,7 @@ def tune_model(x_train, y_train):
 
     model =KNeighborsClassifier()
     grid_search = GridSearchCV(model, param_grid, cv=5, n_jobs=-1)
-    grid_search.fit(x_train, y_train)
+    grid_search.fit(X_train, y_train)
     return grid_search.best_estimator_
 
 best_model = tune_model(X_train, y_train)
